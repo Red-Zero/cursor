@@ -1,0 +1,169 @@
+<head>
+    <style media="screen">
+        .center_point {
+            position: fixed;
+            top: 300px;
+            left: 300px;
+            line-height: 50px;
+            border: 20px solid #000;
+            border-radius: 25px;
+        }
+    </style>
+    <script type="text/javascript">
+        //圆心点位置
+        let centerX = 300, centerY = 300;
+        //转圈起始点位置
+        let startX = -1, startY = -1;
+        //上一个点位置
+        let lastX = -1, lastY = -1;
+        //统计
+        let roundSum = 0, speed = 0;
+
+        //定时器
+        let timer=null,limit=3000,runtime=0;
+
+        //区域统计，以圆心为起点，将鼠标位置分为左上，右上，左下，右下4个区域
+        let area = {
+            upperLeft: false,
+            upperRight: false,
+            lowerLeft: false,
+            lowerRight: false,
+        }
+
+
+        //数据初始化
+        function init() {
+            //console.log(88888)
+            startX = -1, startY = -1;
+            lastX = -1, lastY = -1;
+            roundSum = 0, speed = 0;
+            limit=5000,runtime=0;
+            if(timer){
+                clearInterval(timer);
+            }
+            area = {
+                upperLeft: false,
+                upperRight: false,
+                lowerLeft: false,
+                lowerRight: false,
+            }
+        }
+
+
+        //鼠标绕圈
+        function circle(event) {
+            runtime=0;
+            let x = event.offsetX, y = event.offsetY
+            //设置起始点
+            setStartPoint(x, y)
+            //判断是否顺时针转动
+            if (!isClockwise(x, y)) {
+                console.log(22)
+                //非顺时针转动，数据重置，结束
+                init();
+                return;
+            }
+            //顺时针转动，更新上一个点
+            setLastPoint(x, y)
+            //更新统计
+            countAroundSum(x, y)
+
+        }
+        //设置起始点
+        function setStartPoint(x, y) {
+            //console.log(startX > 0 || startY > 0,startX,startY,lastX,lastY,x,y)
+            if (startX > 0 || startY > 0) {
+                return
+            }
+            startX = x;
+            startY = y;
+            lastX = x;
+            lastY = y;
+            //设置定时器
+           timer= setInterval(function(){ 
+            speed+=100;
+            runtime+=100;
+            console.log(runtime,limit)
+            if(runtime>limit){
+                speed=0;
+                runtime=0
+                clearInterval(timer);
+            }
+            document.getElementById('speed').innerHTML = `速度:${(speed/1000).toFixed(2)} 秒`
+            }, 100);
+            //console.log(startX > 0 || startY > 0,startX,startY,lastX,lastY,x,y)
+        }
+        //记录上一个点
+        function setLastPoint(x, y) {
+            lastX = x;
+            lastY = y;
+        }
+        //是否顺时针转动
+        function isClockwise(x, y, model = 0) {
+
+            let pointX = lastX, pointY = lastY
+            if (model == 1) {
+                pointX = startX, pointY = startY
+            }
+            //判断point 在哪个区域
+            //左上
+            if (pointX <= centerX && pointY <= centerY) {
+                if (x >= pointX || y <= pointY) {
+                    area.upperLeft = true
+                    return true
+                }
+
+                return false
+            }
+            //右上
+            if (pointX > centerX && pointY <= centerY) {
+                if (x >= pointX || y >= pointY) {
+                    area.upperRight = true
+                    return true
+                }
+                return false
+            }
+            //右下
+            if (pointX >= centerX && pointY > centerY) {
+                if (x <= pointX || y >= pointY) {
+                    area.lowerRight = true
+                    return true
+                }
+                return false
+            }
+            //左下
+            if (pointX < centerX && pointY > centerY) {
+                if (x <= pointX || y <= pointY) {
+                    area.lowerLeft = true
+                    return true
+                }
+                return false
+            }
+            return false
+        }
+        //统计更新
+        function countAroundSum(x, y) {
+            //console.log(area)
+            //4个区域都经过并且在 起始点的顺时针方向，圈数+1
+            if (area.lowerLeft && area.lowerRight && area.upperLeft && area.upperRight && isClockwise(x, y, 1)) {
+                roundSum++;
+                speed=0
+                area = {
+                    upperLeft: false,
+                    upperRight: false,
+                    lowerLeft: false,
+                    lowerRight: false,
+                }
+            }
+            document.getElementById('roundSum').innerHTML = `圈数:${roundSum}`
+        }
+    </script>
+</head>
+
+<body onmousemove="circle(event)">
+    <span id="roundSum">圈数:0</span>
+    <span id="speed">速度：0秒</span>
+    <div>
+        <div id="center" class="center_point"></div>
+    </div>
+</body>
